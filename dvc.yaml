@@ -1,0 +1,95 @@
+stages:
+  ingest:
+    cmd: python -m cto.pipelines.ingest
+    deps:
+      - src/cto/pipelines/ingest.py
+      - src/cto/data/cto_labels.py
+      - src/cto/data/aact_client.py
+      - config/aact.yaml
+    outs:
+      - data/raw/cto_phase1.parquet
+      - data/raw/cto_phase2.parquet
+      - data/raw/cto_phase3.parquet
+      - data/raw/cto_gold.parquet
+      - data/raw/aact_studies_snapshot.parquet
+    params:
+      - params.yaml:
+        - ingest
+
+  sponsor_history:
+    cmd: python -m cto.pipelines.build_sponsor_history
+    deps:
+      - src/cto/features/sponsor_history.py
+      - src/cto/pipelines/build_sponsor_history.py
+      - data/raw/aact_studies_snapshot.parquet
+      - data/raw/cto_gold.parquet
+    outs:
+      - data/interim/sponsor_history.parquet
+
+  featurize:
+    cmd: python -m cto.pipelines.featurize
+    deps:
+      - src/cto/pipelines/featurize.py
+      - src/cto/features/build.py
+      - src/cto/features/leakage.py
+      - src/cto/features/split.py
+      - src/cto/features/text.py
+      - data/raw/cto_phase1.parquet
+      - data/raw/cto_phase2.parquet
+      - data/raw/cto_phase3.parquet
+      - data/raw/aact_studies_snapshot.parquet
+      - data/raw/aact_designs_snapshot.parquet
+      - data/raw/aact_eligibilities_snapshot.parquet
+      - data/raw/aact_sponsors_snapshot.parquet
+      - data/raw/aact_interventions_snapshot.parquet
+      - data/raw/aact_calculated_values_snapshot.parquet
+      - data/raw/aact_countries_snapshot.parquet
+      - config/leakage_blocklist.yaml
+      - config/features.yaml
+    outs:
+      - data/processed/features_phase1_train.parquet
+      - data/processed/features_phase1_val.parquet
+      - data/processed/features_phase1_test.parquet
+      - data/processed/features_phase2_train.parquet
+      - data/processed/features_phase2_val.parquet
+      - data/processed/features_phase2_test.parquet
+      - data/processed/features_phase3_train.parquet
+      - data/processed/features_phase3_val.parquet
+      - data/processed/features_phase3_test.parquet
+      - data/processed/labels_phase1_train.parquet
+      - data/processed/labels_phase1_val.parquet
+      - data/processed/labels_phase1_test.parquet
+      - data/processed/labels_phase2_train.parquet
+      - data/processed/labels_phase2_val.parquet
+      - data/processed/labels_phase2_test.parquet
+      - data/processed/labels_phase3_train.parquet
+      - data/processed/labels_phase3_val.parquet
+      - data/processed/labels_phase3_test.parquet
+      - models/tfidf_vectorizer.joblib
+    params:
+      - params.yaml:
+        - features
+        - split
+
+  train_baseline:
+    cmd: python -m cto.pipelines.train_baseline
+    deps:
+      - src/cto/pipelines/train_baseline.py
+      - src/cto/models/train.py
+      - src/cto/models/calibrate.py
+      - src/cto/models/explain.py
+      - data/processed/
+      - models/tfidf_vectorizer.joblib
+    outs:
+      - reports/figures/calibration_phase1.png
+      - reports/figures/calibration_phase2.png
+      - reports/figures/calibration_phase3.png
+      - reports/figures/shap_phase1.png
+      - reports/figures/shap_phase2.png
+      - reports/figures/shap_phase3.png
+      - reports/figures/shap_bar_phase1.png
+      - reports/figures/shap_bar_phase2.png
+      - reports/figures/shap_bar_phase3.png
+    params:
+      - params.yaml:
+        - model

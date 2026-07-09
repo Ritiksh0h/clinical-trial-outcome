@@ -1,0 +1,66 @@
+# CTO labeling-function columns — used to GENERATE labels, never features
+cto_lf_columns:
+  - hint_train
+  - hint_train2
+  - hint_train3
+  - status
+  - status2
+  - gpt
+  - gpt2
+  - linkage
+  - linkage2
+  - stock_price
+  - results_reported
+  - new_headlines
+  - pvalues
+  - update_more_recent
+  - sites
+  - serious_ae
+  - patient_drop
+  - num_patients
+  - death_ae
+  - amendments
+  - all_ae
+  - pred_proba
+
+# AACT post-completion columns — only exist after trial ends
+aact_post_hoc_columns:
+  - why_stopped
+  - results_first_posted_date
+  - results_first_submitted_date
+  - results_first_posted_date_type
+  - last_known_status
+  - fdaaa801_violation
+  - limitations_and_caveats
+  - actual_duration             # from calculated_values
+  - were_results_reported       # from calculated_values
+  - overall_status              # COMPLETED/TERMINATED — only known post-completion
+  - last_update_posted_date     # definitionally post-registration
+  - last_update_submitted_date
+  - last_update_posted_date_type
+  - disposition_first_posted_date
+  - disposition_first_submitted_date
+
+# Conditional soft-leakage rule (enforced in build.py, NOT by column name).
+# `enrollment` is used ONLY where enrollment_type == "ESTIMATED" (planned, registration-time).
+# `enrollment` where enrollment_type == "ACTUAL" is completion-time — soft leakage (a low
+# actual enrollment is partly a consequence of early termination, which correlates with the
+# label) — and is never used: _compute_enrollment_log() gates on ESTIMATED, NaN otherwise.
+# This is a string, not a list, so the loader does NOT add it as a hard column name — the raw
+# `enrollment` column is legitimately consumed to build enrollment_log, and blocklisting the
+# name would make drop_leakage_columns() delete it and re-break the feature.
+enrollment_conditional_note: "enrollment_log = ESTIMATED rows only; ACTUAL excluded as soft leakage. Enforced by _compute_enrollment_log (build.py) + test_estimated_enrollment_only (test_leakage.py)."
+
+# AACT result tables — never query these for features
+aact_result_tables:
+  - outcomes
+  - outcome_analyses
+  - outcome_measurements
+  - outcome_counts
+  - result_groups
+  - reported_events
+  - reported_event_totals
+  - baseline_measurements
+  - baseline_counts
+  - participant_flows
+  - milestones

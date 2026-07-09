@@ -1,0 +1,29 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets
+.env
+
+# MLflow
+mlflow.db
+mlruns/
+
+# Data (tracked by DVC, not git)
+data/raw/*.parquet
+data/processed/*.parquet
+data/interim/*.parquet
+
+# Reports
+reports/figures/*.png
+reports/figures/*.txt
+models/*.joblib
+models/*.pkl
+.DS_Store

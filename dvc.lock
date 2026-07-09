@@ -1,0 +1,58 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: python -m cto.pipelines.ingest
+    deps:
+    - path: config/aact.yaml
+      hash: md5
+      md5: 1484864411eae47eda45540e6a20dc37
+      size: 390
+    - path: src/cto/data/aact_client.py
+      hash: md5
+      md5: fc5c921e09fad149d13c612821e74147
+      size: 6600
+    - path: src/cto/data/cto_labels.py
+      hash: md5
+      md5: 985933057d6902fd05801947540d3634
+      size: 3737
+    - path: src/cto/pipelines/ingest.py
+      hash: md5
+      md5: b49947dcc23afcf2616855e64a0a5058
+      size: 2609
+    params:
+      params.yaml:
+        ingest:
+          cto_hf_repo: chufangao/CTO
+          cto_phase_configs:
+          - name: phase1
+            hf_config: phase1_CTO_preds
+          - name: phase2
+            hf_config: phase2_CTO_preds
+          - name: phase3
+            hf_config: phase3_CTO_preds
+          - name: gold
+            hf_config: human_labels
+          aact:
+            lookback_days: 7
+            full_pull: false
+    outs:
+    - path: data/raw/aact_studies_snapshot.parquet
+      hash: md5
+      md5: 004cafc83d65dfa536fdfcd31a37122b
+      size: 6619
+    - path: data/raw/cto_gold.parquet
+      hash: md5
+      md5: 7db7fecb21b8d6e0c6ddf9126824fea2
+      size: 97758
+    - path: data/raw/cto_phase1.parquet
+      hash: md5
+      md5: 8b292dcc8888a39fb9f9dea767eb7fed
+      size: 372593
+    - path: data/raw/cto_phase2.parquet
+      hash: md5
+      md5: 375e134fff9707cb9784383d7ebd064e
+      size: 419979
+    - path: data/raw/cto_phase3.parquet
+      hash: md5
+      md5: 54c9a282bc9a1a90d8d15a7b64049d9b
+      size: 250604

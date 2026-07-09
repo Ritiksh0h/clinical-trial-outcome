@@ -1,0 +1,49 @@
+schema_version: "1.1.0"  # 1.1.0: +num_countries, +is_multinational, +healthy_volunteers
+                         # (2.0.0 reserved for sponsor + indication history, Phase 2 Step 4)
+
+# Registration-time feature definitions
+numeric_features:
+  - enrollment_log              # log1p(studies.enrollment) where enrollment_type=ANTICIPATED
+  - number_of_arms
+  # number_of_groups removed: 100% null for Phase III (AACT only populates this
+  # for observational studies, not interventional trials). Verified via EDA.
+  - number_of_facilities
+  - num_countries               # distinct declared countries (ctgov.countries, ignores `removed`)
+  - criteria_length             # char count of eligibility criteria text
+  - num_inclusion_criteria      # count of inclusion bullet points
+  - num_exclusion_criteria      # count of exclusion bullet points
+  - min_age_years               # parsed from eligibilities.minimum_age
+  - max_age_years               # parsed from eligibilities.maximum_age
+  - registration_year           # year of study_first_posted_date
+  # num_primary_outcomes: deferred — needs design_outcomes table (not in the 7-table
+  # mirror); revisit if feature-importance analysis shows endpoint features would
+  # help completion prediction.
+
+categorical_features:
+  - phase_clean                 # 1/2/3 (routing key, one-hot for combined phases)
+  - sponsor_class               # INDUSTRY/NIH/FED/OTHER_GOV/NETWORK/OTHER/UNKNOWN
+  - allocation                  # RANDOMIZED/NON_RANDOMIZED/N_A
+  - intervention_model          # PARALLEL/CROSSOVER/SINGLE_GROUP/FACTORIAL/SEQUENTIAL
+  - masking_ordinal             # 0=OPEN, 1=SINGLE, 2=DOUBLE, 3=TRIPLE, 4=QUADRUPLE
+  - primary_purpose             # TREATMENT/PREVENTION/BASIC_SCIENCE/DIAGNOSTIC/etc.
+  - intervention_type_primary   # DRUG/BIOLOGICAL/DEVICE/BEHAVIORAL/OTHER
+  - gender                      # ALL/FEMALE/MALE
+  - healthy_volunteers          # Yes/No/Unknown
+
+flag_features:
+  - has_industry_lead           # sponsor_class == INDUSTRY
+  - has_nih_lead                # sponsor_class == NIH
+  - has_industry_collaborator
+  - has_nih_collaborator
+  - is_randomized
+  - is_blinded                  # masking != NONE
+  - is_multinational            # num_countries > 1
+  - accepts_healthy_volunteers
+  - has_drug_intervention
+  - has_biological_intervention
+  - has_combination_therapy     # num_interventions > 1
+  # has_survival_endpoint: deferred — needs design_outcomes table (not in the 7-table
+  # mirror); revisit if feature-importance analysis shows endpoint features would help.
+
+text_features:
+  - eligibility_tfidf           # TF-IDF on criteria field, 400 dims, 1-2 grams

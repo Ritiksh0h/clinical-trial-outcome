@@ -1,0 +1,21 @@
+host: aact-db.ctti-clinicaltrials.org
+port: 5432
+dbname: aact
+schema: ctgov
+sslmode: require
+
+# Registration-time tables (safe to query for features)
+feature_tables:
+  - studies
+  - designs
+  - eligibilities
+  - sponsors
+  - conditions
+  - interventions
+  - browse_conditions
+  - browse_interventions
+  - calculated_values
+  - facilities
+  - countries
+  - design_outcomes
+  - design_groups

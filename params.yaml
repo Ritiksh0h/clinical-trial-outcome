@@ -1,0 +1,51 @@
+ingest:
+  cto_hf_repo: "chufangao/CTO"
+  cto_phase_configs:
+    - name: phase1
+      hf_config: phase1_CTO_preds
+    - name: phase2
+      hf_config: phase2_CTO_preds
+    - name: phase3
+      hf_config: phase3_CTO_preds
+    - name: gold
+      hf_config: human_labels
+  aact:
+    lookback_days: 7
+    full_pull: false
+
+split:
+  train_cutoff: "2021-12-31"   # trials completed on/before this → train
+  val_cutoff: "2022-12-31"     # trials completed 2022 → val
+  # test: trials completed 2023+ (plus the CTO gold set 2020-2024 for final eval)
+  date_col: "completion_date"
+  min_split_size: 100
+
+features:
+  schema_version: "1.1.0"   # +num_countries, +is_multinational, +healthy_volunteers
+  tfidf_max_features: 400
+  tfidf_ngram_range: [1, 2]
+  min_enrollment: 1
+  phases: [1, 2, 3]
+
+model:
+  phases: [1, 2, 3]
+  n_optuna_trials: 100
+  early_stopping_rounds: 50
+  n_estimators: 2000
+  random_state: 42
+  # From GOLD label base rates (expert-labeled set), NOT weak-label or published rates.
+  # scale_pos_weight = (1 - pos_rate) / pos_rate, using the confirmed gold pos_rates.
+  # Phase I:   gold pos_rate 0.199 → (1-0.199)/0.199 = 4.02
+  # Phase II:  gold pos_rate 0.309 → (1-0.309)/0.309 = 2.23
+  # Phase III: gold pos_rate 0.529 → (1-0.529)/0.529 = 0.89
+  class_weight_by_phase:
+    1: 4.02
+    2: 2.23
+    3: 0.89
+
+monitoring:
+  psi_amber: 0.10
+  psi_red: 0.20
+  prauc_drop_amber: 0.03
+  prauc_drop_red: 0.07
+  min_new_outcomes_for_retrain: 250
