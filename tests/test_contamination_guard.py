@@ -4,6 +4,7 @@ import json
 
 import pandas as pd
 import pytest
+
 from cto.features.contamination_guard import (
     filter_weak_excluding_gold_test,
     load_gold_test_nct_ids,

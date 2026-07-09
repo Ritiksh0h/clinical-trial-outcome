@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from cto.models.train import compute_metrics
 
 

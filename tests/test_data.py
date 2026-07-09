@@ -1,6 +1,7 @@
 """Data loader tests — no network access required."""
 
 import pandas as pd
+
 from cto.data.cto_labels import derive_binary_label
 
 

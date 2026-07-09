@@ -26,6 +26,17 @@ stages:
     outs:
       - data/interim/sponsor_history.parquet
 
+  indication_history:
+    cmd: python -m cto.pipelines.build_indication_history
+    deps:
+      - src/cto/features/indication_history.py
+      - src/cto/pipelines/build_indication_history.py
+      - data/raw/aact_studies_snapshot.parquet
+      - data/raw/aact_conditions_snapshot.parquet
+      - data/raw/cto_gold.parquet
+    outs:
+      - data/interim/indication_history.parquet
+
   featurize:
     cmd: python -m cto.pipelines.featurize
     deps:

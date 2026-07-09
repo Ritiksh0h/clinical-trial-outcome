@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+
 from cto.features.split import assert_temporal_integrity, make_temporal_splits
 
 

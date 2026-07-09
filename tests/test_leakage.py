@@ -5,6 +5,7 @@ These are the most important tests in the project.
 
 import pandas as pd
 import pytest
+
 from cto.features.leakage import (
     LEAKAGE_BLOCKLIST,
     assert_no_leakage,
@@ -166,6 +167,7 @@ def test_estimated_enrollment_only():
     ACTUAL enrollment is completion-time soft leakage and must yield NaN, never a value.
     """
     import numpy as np
+
     from cto.features.build import _compute_enrollment_log
 
     enrollment = pd.Series([100, 200, 300, 400])

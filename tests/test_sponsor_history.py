@@ -5,6 +5,7 @@ counts must include ONLY trials registered strictly before the current trial.
 """
 
 import pandas as pd
+
 from cto.features.sponsor_history import compute_sponsor_history
 
 
