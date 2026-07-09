@@ -95,6 +95,6 @@ def load_mirror(table: str) -> pd.DataFrame:
     path = _RAW_DIR / f"aact_{table}_snapshot.parquet"
     if not path.exists():
         raise FileNotFoundError(
-            f"Mirror file not found: {path}. " "Run `python -m cto.pipelines.ingest` first."
+            f"Mirror file not found: {path}. Run `python -m cto.pipelines.ingest` first."
         )
     return pd.read_parquet(path)

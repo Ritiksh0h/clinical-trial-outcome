@@ -107,10 +107,10 @@ def run() -> None:
     n = len(pc)
     print("\n=== sponsor_prior_trial_count distribution (all studies) ===")
     for k, v in bins.items():
-        print(f"  {k:<9}: {v:>7,} ({100*v/n:.1f}%)")
+        print(f"  {k:<9}: {v:>7,} ({100 * v / n:.1f}%)")
     print(
         f"  established (>=5): {int(result['sponsor_is_established'].sum()):,} "
-        f"({100*result['sponsor_is_established'].mean():.1f}%)"
+        f"({100 * result['sponsor_is_established'].mean():.1f}%)"
     )
 
     out = _INTERIM / "sponsor_history.parquet"
