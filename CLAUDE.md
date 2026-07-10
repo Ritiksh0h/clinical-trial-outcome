@@ -24,9 +24,16 @@ Previous phases: @docs/PHASE0.md @docs/PHASE1.md
     Phase III: n=2,418  pos_rate=0.529  scale_pos_weight≈0.89
 - Phase 1 baseline (gold eval): Phase I=0.358, Phase II=0.514, Phase III=0.700 PR-AUC
 - Phase III beats published XGBoost baseline (0.697) — this is the one honest result
-- Features: build.py now produces 430 (30 structured + 400 TF-IDF; schema 1.1.0 added
-  num_countries, is_multinational, healthy_volunteers). Phase 1 processed files remain 427
-  (historical). TF-IDF vectorizer fitted on Phase 1 train — DO NOT refit.
+- Features: gold build (schema 2.1.0) produces 438 (27 structured + 400 TF-IDF + 11 history).
+  TF-IDF vectorizer fitted on Phase 1 train — DO NOT refit.
+- number_of_facilities, num_countries, is_multinational DROPPED as soft leakage — all derive
+  from AACT tables (facilities, countries) that ACCRUE during trial conduct, not
+  registration-time. WITHDRAWN trials show truncated counts (median ~1) because they never
+  opened sites — the count is a consequence of the outcome. Confirmed by impact test:
+  dropping facilities cost only 0.04 Phase III PR-AUC (0.819→0.779), so not load-bearing;
+  dropping all three left Phase III ~0.83 (unchanged). This corrects the Phase 1 baseline,
+  which was mildly inflated by these features. Blocklisted (aact_conduct_accrued_soft_leak).
+  See reports/facilities_leak_check.md.
 - THIRD silent data bug found and fixed (dead-feature scan, scripts/dead_feature_scan.py):
   enrollment_log used the wrong magic string ('ANTICIPATED' vs AACT's 'ESTIMATED') — dead
   (all-NaN) since Phase 1. Fixed to ESTIMATED (registration-time, leakage-safe). ACTUAL
@@ -49,6 +56,19 @@ Previous phases: @docs/PHASE0.md @docs/PHASE1.md
   failures, weak failures are routine terminations. Ship gold-only (Track A). Weak data's value
   is realized as FEATURES (sponsor/indication historical rates from all 117k weak trials), NOT
   as training rows. See reports/failure_class_shift.md and reports/pre_training_audit.md.
+
+- Gold phase-routing = CTO MEMBERSHIP (trial in phase N iff its nct_id is in
+  cto_phaseN.parquet; combo trials appear in BOTH their phases). Chosen over _PHASE_MAP:
+  consistent with all prior analysis (which used membership — switching invalidates it);
+  _PHASE_MAP drops ~40% of Phase I gold (the scarcest phase); combo trials in two phases are
+  harmless — the temporal split is a pure function of completion_date with shared cutoffs, so
+  a combo trial lands in the SAME split in both phases (pre_phase2_audit Item 1), no
+  cross-phase leakage. `featurize_gold` is the SOLE gold-split computer: one split object per
+  phase builds the test matrix AND freezes the test nct_ids to
+  `data/processed/gold_test_nct_ids.json` (AUTHORITATIVE — phase1=410, phase2=555, phase3=275,
+  all=1073; gold cutoffs train≤2022 / val 2023 / test 2024+; schema 2.1.0, 438 features).
+  NEVER recompute the gold split elsewhere — read the frozen file
+  (contamination_guard.load_gold_test_nct_ids).
 
 ## Hard rules — never violate these
 
@@ -109,8 +129,9 @@ Previous phases: @docs/PHASE0.md @docs/PHASE1.md
 - browse_conditions: column is `mesh_term` NOT `name`
 - conditions: column is `name` (free-text condition name)
 - number_of_groups: 100% null for interventional trials — removed from features.yaml
-- calculated_values: ONLY pull `number_of_facilities` — never `actual_duration`
-  or `were_results_reported` (both blocklisted as post-hoc)
+- calculated_values / countries: `number_of_facilities`, `num_countries`, `is_multinational`
+  are now BLOCKLISTED as conduct-accrued soft leakage (see Confirmed findings). `actual_duration`
+  and `were_results_reported` remain hard post-hoc blocks.
 
 ## Tech stack
 - Python 3.11, uv; xgboost>=2.0, lightgbm>=4.0, catboost>=1.2

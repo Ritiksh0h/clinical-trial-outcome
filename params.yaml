@@ -14,14 +14,17 @@ ingest:
     full_pull: false
 
 split:
-  train_cutoff: "2021-12-31"   # trials completed on/before this → train
-  val_cutoff: "2022-12-31"     # trials completed 2022 → val
-  # test: trials completed 2023+ (plus the CTO gold set 2020-2024 for final eval)
+  train_cutoff: "2021-12-31"   # WEAK pipeline: trials completed on/before this → train
+  val_cutoff: "2022-12-31"     # WEAK pipeline: trials completed 2022 → val
+  # weak test: trials completed 2023+
+  gold_train_cutoff: "2022-12-31"  # GOLD pipeline: completed on/before → train
+  gold_val_cutoff: "2023-12-31"    # GOLD pipeline: completed 2023 → val; test = 2024+
   date_col: "completion_date"
   min_split_size: 100
 
 features:
-  schema_version: "1.1.0"   # +num_countries, +is_multinational, +healthy_volunteers
+  schema_version: "2.1.0"   # 2.1.0: dropped facilities/num_countries/is_multinational (soft leak)
+                            # 1.1.0 was +num_countries/is_multinational/healthy_volunteers
   tfidf_max_features: 400
   tfidf_ngram_range: [1, 2]
   min_enrollment: 1

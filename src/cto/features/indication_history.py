@@ -16,6 +16,7 @@ on therapeutic area (TA) instead of sponsor:
 This module is self-contained (mirrors sponsor_history) and independently gated: its own
 count + rate hard gates verify 0% leak on ≥500 real test-set trials in the build path.
 """
+
 from __future__ import annotations
 
 import logging
@@ -30,41 +31,166 @@ _INTERIM = Path(__file__).parents[3] / "data" / "interim"
 _INDICATION_PATH = _INTERIM / "indication_history.parquet"
 
 _PHASE_MAP = {
-    "1": 1, "phase 1": 1, "phase1": 1, "phase i": 1,
-    "2": 2, "phase 2": 2, "phase2": 2, "phase ii": 2,
-    "3": 3, "phase 3": 3, "phase3": 3, "phase iii": 3,
+    "1": 1,
+    "phase 1": 1,
+    "phase1": 1,
+    "phase i": 1,
+    "2": 2,
+    "phase 2": 2,
+    "phase2": 2,
+    "phase ii": 2,
+    "3": 3,
+    "phase 3": 3,
+    "phase3": 3,
+    "phase iii": 3,
 }
 
 # Therapeutic-area keyword map (substring match on lowercased MeSH terms). "OTHER" is the
 # default for trials whose conditions match no bucket (or have no condition rows).
 TA_KEYWORDS = {
-    "ONCOLOGY": ["cancer", "tumor", "tumour", "carcinoma", "leukemia", "leukaemia", "lymphoma",
-                 "melanoma", "sarcoma", "neoplasm", "oncolog", "glioma", "myeloma", "malignan",
-                 "metasta", "adenocarcinoma", "blastoma"],
-    "CNS": ["alzheimer", "parkinson", "dementia", "schizophren", "depress", "epilep", "seizure",
-            "migraine", "neurolog", "brain", "multiple sclerosis", "anxiety", "bipolar",
-            "psychiatr", "cognit", "neuropath", "autism", "huntington"],
-    "CARDIOVASCULAR": ["cardiac", "heart", "hypertens", "coronary", "atrial", "arrhythmi",
-                       "stroke", "vascular", "cardiovascular", "myocard", "ischemi", "ischaemi",
-                       "angina", "thrombos", "atheroscler", "aortic"],
-    "INFECTIOUS": ["hiv", "hepatitis", "tuberculosis", "covid", "sars-cov", "infection",
-                   "bacterial", "viral", "virus", "fungal", "antibiotic", "sepsis", "influenza",
-                   "malaria", "candida"],
-    "METABOLIC": ["diabet", "obesity", "insulin", "lipid", "metabolic", "thyroid", "adrenal",
-                  "cholesterol", "glucose", "hyperglycemi", "dyslipidem", "hypoglycemi"],
-    "RESPIRATORY": ["asthma", "copd", "pulmonary", "respiratory", "bronch", "pneumonia",
-                    "cystic fibrosis", "dyspnea", "emphysema"],
-    "IMMUNE": ["rheumatoid", "lupus", "autoimmune", "crohn", "psoriasis", "colitis", "immunolog",
-               "arthritis", "inflammatory", "allerg", "eczema", "dermatitis", "ankylosing"],
+    "ONCOLOGY": [
+        "cancer",
+        "tumor",
+        "tumour",
+        "carcinoma",
+        "leukemia",
+        "leukaemia",
+        "lymphoma",
+        "melanoma",
+        "sarcoma",
+        "neoplasm",
+        "oncolog",
+        "glioma",
+        "myeloma",
+        "malignan",
+        "metasta",
+        "adenocarcinoma",
+        "blastoma",
+    ],
+    "CNS": [
+        "alzheimer",
+        "parkinson",
+        "dementia",
+        "schizophren",
+        "depress",
+        "epilep",
+        "seizure",
+        "migraine",
+        "neurolog",
+        "brain",
+        "multiple sclerosis",
+        "anxiety",
+        "bipolar",
+        "psychiatr",
+        "cognit",
+        "neuropath",
+        "autism",
+        "huntington",
+    ],
+    "CARDIOVASCULAR": [
+        "cardiac",
+        "heart",
+        "hypertens",
+        "coronary",
+        "atrial",
+        "arrhythmi",
+        "stroke",
+        "vascular",
+        "cardiovascular",
+        "myocard",
+        "ischemi",
+        "ischaemi",
+        "angina",
+        "thrombos",
+        "atheroscler",
+        "aortic",
+    ],
+    "INFECTIOUS": [
+        "hiv",
+        "hepatitis",
+        "tuberculosis",
+        "covid",
+        "sars-cov",
+        "infection",
+        "bacterial",
+        "viral",
+        "virus",
+        "fungal",
+        "antibiotic",
+        "sepsis",
+        "influenza",
+        "malaria",
+        "candida",
+    ],
+    "METABOLIC": [
+        "diabet",
+        "obesity",
+        "insulin",
+        "lipid",
+        "metabolic",
+        "thyroid",
+        "adrenal",
+        "cholesterol",
+        "glucose",
+        "hyperglycemi",
+        "dyslipidem",
+        "hypoglycemi",
+    ],
+    "RESPIRATORY": [
+        "asthma",
+        "copd",
+        "pulmonary",
+        "respiratory",
+        "bronch",
+        "pneumonia",
+        "cystic fibrosis",
+        "dyspnea",
+        "emphysema",
+    ],
+    "IMMUNE": [
+        "rheumatoid",
+        "lupus",
+        "autoimmune",
+        "crohn",
+        "psoriasis",
+        "colitis",
+        "immunolog",
+        "arthritis",
+        "inflammatory",
+        "allerg",
+        "eczema",
+        "dermatitis",
+        "ankylosing",
+    ],
 }
 # priority order for a trial matching multiple buckets (first wins); OTHER is the fallback.
-TA_PRIORITY = ["ONCOLOGY", "CNS", "CARDIOVASCULAR", "INFECTIOUS", "METABOLIC", "RESPIRATORY", "IMMUNE"]
-TA_CODE = {"OTHER": 0, "ONCOLOGY": 1, "CARDIOVASCULAR": 2, "CNS": 3, "INFECTIOUS": 4,
-           "METABOLIC": 5, "RESPIRATORY": 6, "IMMUNE": 7}
+TA_PRIORITY = [
+    "ONCOLOGY",
+    "CNS",
+    "CARDIOVASCULAR",
+    "INFECTIOUS",
+    "METABOLIC",
+    "RESPIRATORY",
+    "IMMUNE",
+]
+TA_CODE = {
+    "OTHER": 0,
+    "ONCOLOGY": 1,
+    "CARDIOVASCULAR": 2,
+    "CNS": 3,
+    "INFECTIOUS": 4,
+    "METABOLIC": 5,
+    "RESPIRATORY": 6,
+    "IMMUNE": 7,
+}
 
 _OUT_COLS = [
-    "nct_id", "ta_prior_trial_count", "ta_prior_same_phase_count",
-    "ta_prior_completion_rate", "ta_prior_same_phase_completion_rate", "ta_bucket",
+    "nct_id",
+    "ta_prior_trial_count",
+    "ta_prior_same_phase_count",
+    "ta_prior_completion_rate",
+    "ta_prior_same_phase_completion_rate",
+    "ta_bucket",
 ]
 
 
@@ -95,7 +221,9 @@ def _prior_counts(df: pd.DataFrame, group_cols: list[str]) -> pd.DataFrame:
         .agg(n_at_date=("_completed", "size"))
         .sort_values(group_cols + ["date"])
     )
-    agg["prior_total"] = agg.groupby(group_cols, dropna=False)["n_at_date"].cumsum() - agg["n_at_date"]
+    agg["prior_total"] = (
+        agg.groupby(group_cols, dropna=False)["n_at_date"].cumsum() - agg["n_at_date"]
+    )
     return agg[group_cols + ["date", "prior_total"]]
 
 
@@ -118,9 +246,13 @@ def _rate_outcome_known(
     ev = ev.sort_values("comp_date")
     left = df.loc[df["date"].notna(), ["_row", *group_cols, "date"]].sort_values("date")
     m = pd.merge_asof(
-        left, ev[[*group_cols, "comp_date", "cum_n", "cum_c"]],
-        left_on="date", right_on="comp_date", by=group_cols,
-        direction="backward", allow_exact_matches=False,
+        left,
+        ev[[*group_cols, "comp_date", "cum_n", "cum_c"]],
+        left_on="date",
+        right_on="comp_date",
+        by=group_cols,
+        direction="backward",
+        allow_exact_matches=False,
     )
     denom = pd.Series(m["cum_n"].to_numpy(), index=m["_row"].to_numpy())
     num = pd.Series(m["cum_c"].to_numpy(), index=m["_row"].to_numpy())
@@ -144,15 +276,19 @@ def compute_indication_history(
         df["comp_date"] = pd.NaT
     df["_completed"] = (df["overall_status"].astype(str).str.upper() == "COMPLETED").astype(int)
     df["_phase"] = (
-        df["phase"].fillna("").astype(str).str.lower().str.strip().map(_PHASE_MAP)
-    ).fillna(-1).astype(int)
+        (df["phase"].fillna("").astype(str).str.lower().str.strip().map(_PHASE_MAP))
+        .fillna(-1)
+        .astype(int)
+    )
     df["_ta"] = assign_therapeutic_area(df["nct_id"], conditions_df)  # never NA (OTHER default)
 
     # ── COUNT features (registration order) ───────────────────────────────────
     eligible = df[df["date"].notna()].copy()
     allp = _prior_counts(eligible, ["_ta"])
     df = df.merge(allp, on=["_ta", "date"], how="left")
-    samep = _prior_counts(eligible, ["_ta", "_phase"]).rename(columns={"prior_total": "phase_total"})
+    samep = _prior_counts(eligible, ["_ta", "_phase"]).rename(
+        columns={"prior_total": "phase_total"}
+    )
     df = df.merge(samep, on=["_ta", "_phase", "date"], how="left")
     df.loc[df["date"].isna(), ["prior_total", "phase_total"]] = 0
     df["ta_prior_trial_count"] = df["prior_total"].fillna(0).astype(int)
@@ -180,11 +316,17 @@ def compute_indication_history(
     result = df[_OUT_COLS].reset_index(drop=True)
 
     sample = result.sample(min(300, len(result)), random_state=0)["nct_id"].tolist()
-    assert_no_future_leakage_ta(result, studies_df, conditions_df, sample, context="compute_indication_history")
-    assert_rate_outcome_known_ta(result, studies_df, conditions_df, sample, context="compute_indication_history")
+    assert_no_future_leakage_ta(
+        result, studies_df, conditions_df, sample, context="compute_indication_history"
+    )
+    assert_rate_outcome_known_ta(
+        result, studies_df, conditions_df, sample, context="compute_indication_history"
+    )
     logger.info(
         "compute_indication_history: %d trials, OTHER=%.1f%%, rate non-fill=%.3f",
-        len(result), 100 * (df["_ta"] == "OTHER").mean(), float((rd > 0).mean()),
+        len(result),
+        100 * (df["_ta"] == "OTHER").mean(),
+        float((rd > 0).mean()),
     )
     return result
 
@@ -193,7 +335,9 @@ def _ta_and_dates(studies_df: pd.DataFrame, conditions_df: pd.DataFrame):
     ta = assign_therapeutic_area(studies_df["nct_id"], conditions_df).to_numpy()
     R = pd.to_datetime(studies_df["study_first_posted_date"], errors="coerce").to_numpy()
     C = pd.to_datetime(studies_df.get("completion_date"), errors="coerce").to_numpy()
-    done = (studies_df["overall_status"].astype(str).str.upper() == "COMPLETED").to_numpy().astype(int)
+    done = (
+        (studies_df["overall_status"].astype(str).str.upper() == "COMPLETED").to_numpy().astype(int)
+    )
     nid = studies_df["nct_id"].to_numpy()
     return nid, ta, R, C, done
 
@@ -219,7 +363,9 @@ def assert_no_future_leakage_ta(result, studies_df, conditions_df, check_nct_ids
     return evidence
 
 
-def assert_rate_outcome_known_ta(result, studies_df, conditions_df, check_nct_ids, context="", tol=1e-6):
+def assert_rate_outcome_known_ta(
+    result, studies_df, conditions_df, check_nct_ids, context="", tol=1e-6
+):
     """RATE gate: stored ta_prior_completion_rate == honest rate over same-TA priors whose
     completion_date < registration. Returns per-trial evidence for trials with ≥1 known prior."""
     nid, ta, R, C, done = _ta_and_dates(studies_df, conditions_df)
@@ -237,7 +383,9 @@ def assert_rate_outcome_known_ta(result, studies_df, conditions_df, check_nct_id
             continue
         honest = float(done[known].sum()) / denom
         stored = float(rate_of.get(n, np.nan))
-        evidence.append({"nct_id": n, "stored_rate": stored, "honest_rate": honest, "n_known": denom})
+        evidence.append(
+            {"nct_id": n, "stored_rate": stored, "honest_rate": honest, "n_known": denom}
+        )
         if not np.isfinite(stored) or abs(stored - honest) > tol:
             violations.append((n, round(stored, 4), round(honest, 4), denom))
     if violations:

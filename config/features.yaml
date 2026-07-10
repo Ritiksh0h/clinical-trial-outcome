@@ -1,14 +1,15 @@
-schema_version: "1.1.0"  # 1.1.0: +num_countries, +is_multinational, +healthy_volunteers
-                         # (2.0.0 reserved for sponsor + indication history, Phase 2 Step 4)
+schema_version: "2.1.0"  # 2.1.0: DROPPED number_of_facilities/num_countries/is_multinational
+                         # (conduct-accrued soft leakage — see facilities_leak_check.md)
+                         # 2.0.0 was +6 sponsor-history +5 indication-history
 
 # Registration-time feature definitions
 numeric_features:
-  - enrollment_log              # log1p(studies.enrollment) where enrollment_type=ANTICIPATED
+  - enrollment_log              # log1p(studies.enrollment) where enrollment_type=ESTIMATED
   - number_of_arms
   # number_of_groups removed: 100% null for Phase III (AACT only populates this
   # for observational studies, not interventional trials). Verified via EDA.
-  - number_of_facilities
-  - num_countries               # distinct declared countries (ctgov.countries, ignores `removed`)
+  # number_of_facilities, num_countries DROPPED — conduct-accrued soft leakage
+  # (facilities/countries tables accrue during the trial; WITHDRAWN → ~1). Blocklisted.
   - criteria_length             # char count of eligibility criteria text
   - num_inclusion_criteria      # count of inclusion bullet points
   - num_exclusion_criteria      # count of exclusion bullet points
@@ -18,6 +19,16 @@ numeric_features:
   # num_primary_outcomes: deferred — needs design_outcomes table (not in the 7-table
   # mirror); revisit if feature-importance analysis shows endpoint features would
   # help completion prediction.
+  # ── sponsor history (data/interim/sponsor_history.parquet; two-window leak-safe) ──
+  - sponsor_prior_trial_count           # registration-order count
+  - sponsor_prior_phase_count           # registration-order, same phase
+  - sponsor_prior_completion_rate       # outcome-known-before rate
+  - sponsor_prior_same_phase_completion_rate
+  # ── indication (therapeutic-area) history (data/interim/indication_history.parquet) ──
+  - ta_prior_trial_count                # registration-order count
+  - ta_prior_same_phase_count           # registration-order, same phase
+  - ta_prior_completion_rate            # outcome-known-before rate
+  - ta_prior_same_phase_completion_rate
 
 categorical_features:
   - phase_clean                 # 1/2/3 (routing key, one-hot for combined phases)
@@ -29,6 +40,7 @@ categorical_features:
   - intervention_type_primary   # DRUG/BIOLOGICAL/DEVICE/BEHAVIORAL/OTHER
   - gender                      # ALL/FEMALE/MALE
   - healthy_volunteers          # Yes/No/Unknown
+  - ta_bucket                   # therapeutic-area code 0-7 (0=OTHER)
 
 flag_features:
   - has_industry_lead           # sponsor_class == INDUSTRY
@@ -37,11 +49,13 @@ flag_features:
   - has_nih_collaborator
   - is_randomized
   - is_blinded                  # masking != NONE
-  - is_multinational            # num_countries > 1
+  # is_multinational DROPPED — derived from num_countries (conduct-accrued soft leakage)
   - accepts_healthy_volunteers
   - has_drug_intervention
   - has_biological_intervention
   - has_combination_therapy     # num_interventions > 1
+  - sponsor_is_established       # sponsor_prior_trial_count >= 5
+  - sponsor_is_large             # sponsor_prior_trial_count >= 20
   # has_survival_endpoint: deferred — needs design_outcomes table (not in the 7-table
   # mirror); revisit if feature-importance analysis shows endpoint features would help.
 

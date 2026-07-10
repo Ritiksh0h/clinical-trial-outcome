@@ -5,7 +5,6 @@ These are the most important tests in the project.
 
 import pandas as pd
 import pytest
-
 from cto.features.leakage import (
     LEAKAGE_BLOCKLIST,
     assert_no_leakage,
@@ -167,7 +166,6 @@ def test_estimated_enrollment_only():
     ACTUAL enrollment is completion-time soft leakage and must yield NaN, never a value.
     """
     import numpy as np
-
     from cto.features.build import _compute_enrollment_log
 
     enrollment = pd.Series([100, 200, 300, 400])
@@ -186,3 +184,10 @@ def test_raw_enrollment_not_hard_blocked():
     legitimately consumes it (ESTIMATED-gated). Blocklisting the name would make
     drop_leakage_columns() delete it and re-break enrollment_log."""
     assert "enrollment" not in LEAKAGE_BLOCKLIST
+
+
+def test_conduct_accrued_features_blocked():
+    """number_of_facilities / num_countries / is_multinational are conduct-accrued soft
+    leakage (facilities & countries tables accrue during the trial) — must be blocklisted."""
+    for c in ("number_of_facilities", "num_countries", "is_multinational"):
+        assert c in LEAKAGE_BLOCKLIST, f"{c} must be blocklisted (conduct-accrued soft leakage)"

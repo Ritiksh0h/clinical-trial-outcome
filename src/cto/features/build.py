@@ -314,17 +314,19 @@ def build_features(
     df["has_drug_intervention"] = df["nct_id"].isin(drug_ncts).astype(int)
     df["has_biological_intervention"] = df["nct_id"].isin(bio_ncts).astype(int)
 
-    # Calculated values (1:1) — number_of_facilities only
-    calc = load_mirror("calculated_values")[["nct_id", "number_of_facilities"]]
-    df = df.merge(calc, on="nct_id", how="left")
+    # number_of_facilities (calculated_values) and num_countries/is_multinational (countries
+    # table) were DROPPED as soft leakage — both AACT tables accrue sites/countries during
+    # trial conduct (WITHDRAWN trials show truncated counts ≈1), so the counts partly encode
+    # the outcome. See reports/facilities_leak_check.md; blocklisted in leakage_blocklist.yaml.
 
-    # Countries — distinct declared countries per trial. Ignore the `removed` flag
-    # (a post-registration edit); count all declared countries = registration-time geography.
-    countries = load_mirror("countries")
-    country_counts = (
-        countries.groupby("nct_id")["name"].nunique().reset_index(name="_num_countries")
-    )
-    df = df.merge(country_counts, on="nct_id", how="left")
+    # Sponsor + indication history (pre-computed, two-window leakage-safe; both cover the
+    # full AACT population so every joined trial is present). Their build steps enforce the
+    # registration-order counts / outcome-known-before rates — no leakage introduced here.
+    from cto.features.indication_history import load_indication_history
+    from cto.features.sponsor_history import load_sponsor_history
+
+    df = df.merge(load_sponsor_history(), on="nct_id", how="left")
+    df = df.merge(load_indication_history(), on="nct_id", how="left")
 
     # ── 2. Numeric features ───────────────────────────────────────────────────
 
@@ -338,16 +340,6 @@ def build_features(
     df["number_of_arms"] = pd.to_numeric(
         df.get("number_of_arms", pd.Series(dtype=float)), errors="coerce"
     ).fillna(2)
-
-    df["number_of_facilities"] = pd.to_numeric(df["number_of_facilities"], errors="coerce")
-    # ponytail: no imputation — XGBoost handles NaN natively
-
-    # num_countries: distinct declared countries; trials with no countries row → 0
-    df["num_countries"] = (
-        pd.to_numeric(df.get("_num_countries", pd.Series(dtype=float)), errors="coerce")
-        .fillna(0)
-        .astype(int)
-    )
 
     criteria_text = df.get("criteria", pd.Series("", index=df.index)).fillna("")
     df["criteria_length"] = criteria_text.str.len()
@@ -441,7 +433,6 @@ def build_features(
     # accepts_healthy_volunteers derived from the mapped categorical (fixes the prior
     # str=="yes" check, which was always 0 because the snapshot stores booleans).
     df["accepts_healthy_volunteers"] = (df["healthy_volunteers"] == 1).astype(int)
-    df["is_multinational"] = (df["num_countries"] > 1).astype(int)
     df["has_combination_therapy"] = (
         df.get("_interv_count", pd.Series(0, index=df.index)).fillna(0) > 1
     ).astype(int)
@@ -466,8 +457,6 @@ def build_features(
         # numeric
         "enrollment_log",
         "number_of_arms",
-        "number_of_facilities",
-        "num_countries",
         "criteria_length",
         "num_inclusion_criteria",
         "num_exclusion_criteria",
@@ -491,11 +480,23 @@ def build_features(
         "has_nih_collaborator",
         "is_randomized",
         "is_blinded",
-        "is_multinational",
         "accepts_healthy_volunteers",
         "has_drug_intervention",
         "has_biological_intervention",
         "has_combination_therapy",
+        # sponsor history (2.0.0)
+        "sponsor_prior_trial_count",
+        "sponsor_prior_phase_count",
+        "sponsor_prior_completion_rate",
+        "sponsor_prior_same_phase_completion_rate",
+        "sponsor_is_established",
+        "sponsor_is_large",
+        # indication (therapeutic-area) history (2.0.0)
+        "ta_prior_trial_count",
+        "ta_prior_same_phase_count",
+        "ta_prior_completion_rate",
+        "ta_prior_same_phase_completion_rate",
+        "ta_bucket",
     ]
 
     X = pd.concat(

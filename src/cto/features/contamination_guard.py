@@ -50,9 +50,31 @@ def filter_weak_excluding_gold_test(
     return safe
 
 
+def save_gold_test_split(per_phase: dict, path: Path | str = GOLD_TEST_IDS_PATH) -> dict:
+    """Persist the frozen gold-test split as {"phase1":[...], "phase2":[...],
+    "phase3":[...], "all":[union]}. Called by featurize_gold with the per-phase test-set
+    nct_ids taken from the SAME split objects that built the test matrices — the single
+    source of truth. Returns the written structure.
+    """
+    obj = {f"phase{p}": sorted(set(per_phase.get(p, []))) for p in (1, 2, 3)}
+    obj["all"] = sorted(set().union(*[set(v) for v in obj.values()]))
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(obj, f, indent=0)
+    logger.info(
+        "Persisted gold-test split to %s: phase1=%d phase2=%d phase3=%d all=%d",
+        path,
+        len(obj["phase1"]),
+        len(obj["phase2"]),
+        len(obj["phase3"]),
+        len(obj["all"]),
+    )
+    return obj
+
+
 def save_gold_test_nct_ids(nct_ids: Iterable[str], path: Path | str = GOLD_TEST_IDS_PATH) -> None:
-    """Persist the frozen gold-test nct_id list (deduped + sorted). Called by featurize_gold
-    so the guard has one authoritative source and never recomputes the split."""
+    """Legacy flat-list writer (kept for back-compat). Prefer save_gold_test_split."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
@@ -60,15 +82,33 @@ def save_gold_test_nct_ids(nct_ids: Iterable[str], path: Path | str = GOLD_TEST_
     logger.info("Persisted %d gold-test nct_ids to %s", len(set(nct_ids)), path)
 
 
-def load_gold_test_nct_ids(path: Path | str = GOLD_TEST_IDS_PATH) -> list[str]:
-    """Load the frozen gold-test nct_id list. Raises if absent — the guard must use the
-    persisted list (single source of truth), never an independent recomputation."""
+def _load_raw(path: Path | str):
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(
-            f"{path} not found — featurize_gold must persist the gold-test nct_id list "
+            f"{path} not found — featurize_gold must persist the gold-test set "
             "(single source of truth) before the contamination guard can run. Never "
             "recompute the split independently."
         )
     with open(path) as f:
         return json.load(f)
+
+
+def load_gold_test_nct_ids(
+    path: Path | str = GOLD_TEST_IDS_PATH, phase: int | None = None
+) -> list[str]:
+    """Load frozen gold-test nct_ids. Returns the union ("all") by default, or a single
+    phase's list if `phase` is given. Handles both the structured dict format and the
+    legacy flat list. Single source of truth — never recompute the split elsewhere."""
+    obj = _load_raw(path)
+    if isinstance(obj, dict):
+        return obj[f"phase{phase}"] if phase is not None else obj["all"]
+    return obj  # legacy flat list
+
+
+def load_gold_test_split(path: Path | str = GOLD_TEST_IDS_PATH) -> dict:
+    """Load the full frozen structure {phase1, phase2, phase3, all}."""
+    obj = _load_raw(path)
+    if not isinstance(obj, dict):
+        return {"all": obj}
+    return obj

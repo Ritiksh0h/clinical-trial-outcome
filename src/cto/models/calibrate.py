@@ -49,9 +49,46 @@ class _IsotonicWrapper:
         return self
 
 
-def calibrate_model(model, X_val: pd.DataFrame, y_val: np.ndarray) -> _IsotonicWrapper:
-    """Fit isotonic calibration on the val set using the pre-fitted model."""
-    wrapper = _IsotonicWrapper(model)
+class _PlattWrapper:
+    """Platt (sigmoid) calibration fit on a held-out val set.
+
+    Small-n safe (Phase I/II gold val < 1000 points, where isotonic overfits). Fits a
+    1-D logistic regression on the base model's raw positive-class probabilities → y_val.
+    Monotonic, so PR-AUC / AUROC (rank metrics) are unchanged; only Brier/ECE improve.
+    """
+
+    def __init__(self, model):
+        self.model = model
+        self._lr = None
+
+    def fit(self, X: pd.DataFrame, y: np.ndarray) -> _PlattWrapper:
+        from sklearn.linear_model import LogisticRegression
+
+        raw = self.model.predict_proba(X)[:, 1].reshape(-1, 1)
+        self._lr = LogisticRegression(C=1e6, solver="lbfgs")  # near-unregularized Platt
+        self._lr.fit(raw, y)
+        return self
+
+    def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
+        raw = self.model.predict_proba(X)[:, 1].reshape(-1, 1)
+        cal = self._lr.predict_proba(raw)[:, 1]
+        return np.column_stack([1 - cal, cal])
+
+    def predict(self, X: pd.DataFrame, threshold: float = 0.5) -> np.ndarray:
+        return (self.predict_proba(X)[:, 1] >= threshold).astype(int)
+
+    @property
+    def classes_(self) -> np.ndarray:
+        return np.array([0, 1])
+
+
+def calibrate_model(model, X_val: pd.DataFrame, y_val: np.ndarray, method: str = "isotonic"):
+    """Fit calibration on the val set using the pre-fitted base model.
+
+    method="sigmoid" → Platt (small-n safe, use for gold Phase I/II/III);
+    method="isotonic" → isotonic (needs ≥1000 calibration points).
+    """
+    wrapper = _PlattWrapper(model) if method == "sigmoid" else _IsotonicWrapper(model)
     wrapper.fit(X_val, y_val)
     return wrapper
 

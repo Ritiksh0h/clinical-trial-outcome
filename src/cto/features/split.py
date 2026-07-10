@@ -17,16 +17,21 @@ def _load_split_params() -> dict:
 
 
 def make_temporal_splits(
-    df: pd.DataFrame, date_col: str = "completion_date"
+    df: pd.DataFrame,
+    date_col: str = "completion_date",
+    train_cutoff: str | None = None,
+    val_cutoff: str | None = None,
 ) -> dict[str, pd.DataFrame]:
     """
     Split df into train/val/test by completion_date (never random).
-    Cutoffs come from params.yaml split section.
+    Cutoffs default to params.yaml split section; callers may override (e.g. the gold
+    pipeline uses 2022/2023 instead of the weak pipeline's 2021/2022). One split function,
+    one code path — the caller passes cutoffs, it does not fork the logic.
     Raises ValueError if any split is empty or below min_split_size.
     """
     p = _load_split_params()
-    train_cutoff = pd.Timestamp(p["train_cutoff"])
-    val_cutoff = pd.Timestamp(p["val_cutoff"])
+    train_cutoff = pd.Timestamp(train_cutoff if train_cutoff is not None else p["train_cutoff"])
+    val_cutoff = pd.Timestamp(val_cutoff if val_cutoff is not None else p["val_cutoff"])
     min_size = p.get("min_split_size", 100)
 
     df = df.copy()

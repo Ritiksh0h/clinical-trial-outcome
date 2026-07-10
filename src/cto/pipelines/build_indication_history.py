@@ -6,6 +6,7 @@ and run BOTH the COUNT gate (no future-registered prior counted) and the RATE ga
 with completion_date >= the current registration counted in a rate). RAISE on violation.
 Prints evidence including count-vs-rate prior numbers, showing the two windows differ.
 """
+
 from __future__ import annotations
 
 import logging
@@ -21,9 +22,18 @@ _VAL_CUTOFF = pd.Timestamp("2023-12-31")
 _GATE_SAMPLE = 500
 
 _PHASE_MAP = {
-    "1": 1, "phase 1": 1, "phase1": 1, "phase i": 1,
-    "2": 2, "phase 2": 2, "phase2": 2, "phase ii": 2,
-    "3": 3, "phase 3": 3, "phase3": 3, "phase iii": 3,
+    "1": 1,
+    "phase 1": 1,
+    "phase1": 1,
+    "phase i": 1,
+    "2": 2,
+    "phase 2": 2,
+    "phase2": 2,
+    "phase ii": 2,
+    "3": 3,
+    "phase 3": 3,
+    "phase3": 3,
+    "phase iii": 3,
 }
 
 
@@ -53,20 +63,30 @@ def run() -> None:
 
     # ── hard gate on REAL test-set trials ─────────────────────────────────────
     test_ids = _gold_test_nct_ids(studies)
-    sample_ids = pd.Series(test_ids).sample(min(_GATE_SAMPLE, len(test_ids)), random_state=42).tolist()
-    count_ev = assert_no_future_leakage_ta(result, studies, conditions, sample_ids, context="build TEST-set gate")
-    rate_ev = assert_rate_outcome_known_ta(result, studies, conditions, sample_ids, context="build TEST-set gate")
+    sample_ids = (
+        pd.Series(test_ids).sample(min(_GATE_SAMPLE, len(test_ids)), random_state=42).tolist()
+    )
+    count_ev = assert_no_future_leakage_ta(
+        result, studies, conditions, sample_ids, context="build TEST-set gate"
+    )
+    rate_ev = assert_rate_outcome_known_ta(
+        result, studies, conditions, sample_ids, context="build TEST-set gate"
+    )
     cnt_of = dict(zip(result["nct_id"], result["ta_prior_trial_count"], strict=False))
 
     print(f"\n=== COUNT gate: PASSED on {len(count_ev)} real TEST-set trials ===")
     for e in sorted(count_ev, key=lambda x: -x["actual_prior"])[:5]:
-        print(f"  {e['nct_id']}: computed={e['computed_prior']}  actual_reg_prior={e['actual_prior']}"
-              f"  {'OK' if e['computed_prior'] <= e['actual_prior'] else 'LEAK'}")
+        print(
+            f"  {e['nct_id']}: computed={e['computed_prior']}  actual_reg_prior={e['actual_prior']}"
+            f"  {'OK' if e['computed_prior'] <= e['actual_prior'] else 'LEAK'}"
+        )
     print(f"\n=== RATE gate: PASSED on {len(rate_ev)} test trials with a known-outcome prior ===")
     print("Stored rate == honest (outcome-known) rate; count vs rate-window prior numbers differ:")
     for e in sorted(rate_ev, key=lambda x: -x["n_known"])[:5]:
-        print(f"  {e['nct_id']}: stored={e['stored_rate']:.4f} honest={e['honest_rate']:.4f}  "
-              f"count_prior={cnt_of.get(e['nct_id'])}  rate_known_prior={e['n_known']}")
+        print(
+            f"  {e['nct_id']}: stored={e['stored_rate']:.4f} honest={e['honest_rate']:.4f}  "
+            f"count_prior={cnt_of.get(e['nct_id'])}  rate_known_prior={e['n_known']}"
+        )
 
     # ── OTHER-bucket fraction + full bucket distribution ──────────────────────
     ta = assign_therapeutic_area(studies["nct_id"], conditions)
@@ -75,8 +95,8 @@ def run() -> None:
     n = len(result)
     print(f"\n=== Therapeutic-area bucket distribution (all {n:,} studies) ===")
     for name, c in dist.items():
-        print(f"  {name:<14}: {c:>7,} ({100*c/n:.1f}%)")
-    print(f"  >>> OTHER (unmapped) fraction: {100*(ta=='OTHER').mean():.1f}%")
+        print(f"  {name:<14}: {c:>7,} ({100 * c / n:.1f}%)")
+    print(f"  >>> OTHER (unmapped) fraction: {100 * (ta == 'OTHER').mean():.1f}%")
 
     # ── per-phase rate non-fill fraction ──────────────────────────────────────
     ph = studies["phase"].fillna("").astype(str).str.lower().str.strip().map(_PHASE_MAP)
@@ -88,6 +108,7 @@ def run() -> None:
     reg_of = dict(zip(studies["nct_id"], R, strict=False))
     print("\n=== rate non-fill fraction on GOLD trials, per phase ===")
     import numpy as np
+
     for target in (1, 2, 3):
         ids = [nid for nid in gold_ids if phase_of.get(nid) == target]
         nonfill = 0
@@ -99,7 +120,9 @@ def run() -> None:
             if ((ta_arr == ta_by[nid]) & (C < np.datetime64(r))).sum() > 0:
                 nonfill += 1
         if ids:
-            print(f"  Phase {target}: {nonfill}/{len(ids)} gold trials have a real (non-filled) rate ({100*nonfill/len(ids):.1f}%)")
+            print(
+                f"  Phase {target}: {nonfill}/{len(ids)} gold trials have a real (non-filled) rate ({100 * nonfill / len(ids):.1f}%)"
+            )
 
     out = _INTERIM / "indication_history.parquet"
     result.to_parquet(out, index=False)

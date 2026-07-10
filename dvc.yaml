@@ -82,6 +82,54 @@ stages:
         - features
         - split
 
+  featurize_gold:
+    cmd: python -m cto.pipelines.featurize_gold
+    deps:
+      - src/cto/pipelines/featurize_gold.py
+      - src/cto/features/build.py
+      - src/cto/features/leakage.py
+      - src/cto/features/split.py
+      - src/cto/features/text.py
+      - src/cto/features/sponsor_history.py
+      - src/cto/features/indication_history.py
+      - src/cto/features/contamination_guard.py
+      - data/raw/cto_gold.parquet
+      - data/raw/cto_phase1.parquet
+      - data/raw/cto_phase2.parquet
+      - data/raw/cto_phase3.parquet
+      - data/raw/aact_studies_snapshot.parquet
+      - data/interim/sponsor_history.parquet
+      - data/interim/indication_history.parquet
+      - models/tfidf_vectorizer.joblib
+      - config/leakage_blocklist.yaml
+      - config/features.yaml
+    outs:
+      - data/processed/features_gold_phase1_train.parquet
+      - data/processed/features_gold_phase1_val.parquet
+      - data/processed/features_gold_phase1_test.parquet
+      - data/processed/features_gold_phase2_train.parquet
+      - data/processed/features_gold_phase2_val.parquet
+      - data/processed/features_gold_phase2_test.parquet
+      - data/processed/features_gold_phase3_train.parquet
+      - data/processed/features_gold_phase3_val.parquet
+      - data/processed/features_gold_phase3_test.parquet
+      - data/processed/labels_gold_phase1_train.parquet
+      - data/processed/labels_gold_phase1_val.parquet
+      - data/processed/labels_gold_phase1_test.parquet
+      - data/processed/labels_gold_phase2_train.parquet
+      - data/processed/labels_gold_phase2_val.parquet
+      - data/processed/labels_gold_phase2_test.parquet
+      - data/processed/labels_gold_phase3_train.parquet
+      - data/processed/labels_gold_phase3_val.parquet
+      - data/processed/labels_gold_phase3_test.parquet
+      # git-tracked (not dvc-cached) so the frozen test set travels with the repo
+      - data/processed/gold_test_nct_ids.json:
+          cache: false
+    params:
+      - params.yaml:
+        - split
+        - features
+
   train_baseline:
     cmd: python -m cto.pipelines.train_baseline
     deps:

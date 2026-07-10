@@ -41,6 +41,18 @@ aact_post_hoc_columns:
   - disposition_first_posted_date
   - disposition_first_submitted_date
 
+# Conduct-accrued soft leakage (hard-blocklisted). These derive from AACT tables that
+# accrue during the trial's life, so their values partly encode the outcome:
+#   - number_of_facilities = COUNT(facilities table); sites open over conduct, WITHDRAWN → ~1
+#   - num_countries / is_multinational = distinct countries (countries table `removed` flag =
+#     post-registration edits); WITHDRAWN → ~1 country.
+# Confirmed by impact test: dropping facilities cost only 0.04 Phase III PR-AUC (not
+# load-bearing). See reports/facilities_leak_check.md. Same treatment as ACTUAL enrollment.
+aact_conduct_accrued_soft_leak:
+  - number_of_facilities
+  - num_countries
+  - is_multinational
+
 # Conditional soft-leakage rule (enforced in build.py, NOT by column name).
 # `enrollment` is used ONLY where enrollment_type == "ESTIMATED" (planned, registration-time).
 # `enrollment` where enrollment_type == "ACTUAL" is completion-time — soft leakage (a low
