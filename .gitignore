@@ -27,3 +27,4 @@ reports/figures/*.txt
 models/*.joblib
 models/*.pkl
 .DS_Store
+catboost_info/

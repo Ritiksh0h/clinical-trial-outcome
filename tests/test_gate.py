@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
+
 from cto.models.gate import (
     auprc_logit_ci,
     evaluate,
@@ -44,9 +45,9 @@ def test_walk_forward_temporal_order():
     for f in folds:
         train_max = dates.iloc[f["train_idx"]].max()
         test_min = dates.iloc[f["test_idx"]].min()
-        assert (
-            train_max < test_min
-        ), f"fold {f['test_year']}: train max {train_max} not strictly before test min {test_min}"
+        assert train_max < test_min, (
+            f"fold {f['test_year']}: train max {train_max} not strictly before test min {test_min}"
+        )
 
 
 def test_walk_forward_positive_per_fold():

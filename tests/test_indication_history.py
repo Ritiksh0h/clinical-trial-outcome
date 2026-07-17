@@ -5,6 +5,7 @@ COUNT features use registration-order. Written before indication_history.py.
 """
 
 import pandas as pd
+
 from cto.features.indication_history import compute_indication_history
 
 

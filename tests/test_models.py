@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from cto.models.train import compute_metrics
 
 
@@ -43,8 +44,9 @@ class _StubModel:
 def test_platt_wrapper_calibrates_and_preserves_ranking():
     """Platt calibration keeps outputs in [0,1], is monotonic (AUROC unchanged), and
     improves Brier on a miscalibrated (over-confident) base model."""
-    from cto.models.calibrate import calibrate_model
     from sklearn.metrics import brier_score_loss, roc_auc_score
+
+    from cto.models.calibrate import calibrate_model
 
     rng = np.random.default_rng(0)
     n = 400

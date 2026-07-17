@@ -30,9 +30,9 @@ def test_y_not_in_feature_files():
     for phase in [1, 2, 3]:
         for split in ["train", "val", "test"]:
             df = pd.read_parquet(PROCESSED / f"features_phase{phase}_{split}.parquet")
-            assert (
-                "y" not in df.columns
-            ), f"Phase {phase} {split}: 'y' found in feature file — must be separate"
+            assert "y" not in df.columns, (
+                f"Phase {phase} {split}: 'y' found in feature file — must be separate"
+            )
 
 
 @pytest.mark.skipif(not PROCESSED.exists(), reason="Run dvc repro featurize first")
@@ -54,6 +54,6 @@ def test_feature_schema_consistent_across_splits():
         )
         cols_val = set(pd.read_parquet(PROCESSED / f"features_phase{phase}_val.parquet").columns)
         cols_test = set(pd.read_parquet(PROCESSED / f"features_phase{phase}_test.parquet").columns)
-        assert (
-            cols_train == cols_val == cols_test
-        ), f"Phase {phase}: feature schemas differ across splits"
+        assert cols_train == cols_val == cols_test, (
+            f"Phase {phase}: feature schemas differ across splits"
+        )

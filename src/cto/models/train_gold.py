@@ -80,9 +80,9 @@ def train_gold_phase(phase: int) -> dict:
 
     # frozen test set is authoritative — confirm the test matrix matches its count
     frozen = load_gold_test_nct_ids(phase=phase)
-    assert len(Xte) == len(
-        frozen
-    ), f"phase {phase}: test matrix {len(Xte)} rows != frozen {len(frozen)} nct_ids"
+    assert len(Xte) == len(frozen), (
+        f"phase {phase}: test matrix {len(Xte)} rows != frozen {len(frozen)} nct_ids"
+    )
 
     model = XGBClassifier(scale_pos_weight=spw, **_XGB)
     model.fit(Xtr, ytr, eval_set=[(Xval, yval)], verbose=False)

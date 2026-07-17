@@ -69,6 +69,13 @@ Previous phases: @docs/PHASE0.md @docs/PHASE1.md
   all=1073; gold cutoffs train≤2022 / val 2023 / test 2024+; schema 2.1.0, 438 features).
   NEVER recompute the gold split elsewhere — read the frozen file
   (contamination_guard.load_gold_test_nct_ids).
+- Model bake-off (XGBoost/LightGBM/CatBoost/CatBoost-native) on clean 438-feature set:
+  all statistically indistinguishable. No challenger passes the promotion gate on any
+  phase (Phase III a literal tie at 0.828; LightGBM tied but CI lower bound 0.739 <
+  champion point → gate correctly refused). XGBoost retained. CatBoost-native (categoricals
+  + has_time) did NOT beat engineered features — the leakage-safe sponsor/TA rate features
+  already capture the categorical signal. Final model-agnostic headline: Phase III PR-AUC
+  ~0.83, Phase II ~0.26, Phase I ~0.31 walk-forward — leak-free, four-algorithm-robust.
 
 ## Hard rules — never violate these
 

@@ -49,9 +49,9 @@ def test_frozen_counts_match_test_matrices():
     frozen = json.loads(_FROZEN.read_text())
     for phase in (1, 2, 3):
         n_matrix = len(pd.read_parquet(_PROCESSED / f"features_gold_phase{phase}_test.parquet"))
-        assert (
-            len(frozen[f"phase{phase}"]) == n_matrix
-        ), f"phase {phase}: frozen {len(frozen[f'phase{phase}'])} != test matrix {n_matrix}"
+        assert len(frozen[f"phase{phase}"]) == n_matrix, (
+            f"phase {phase}: frozen {len(frozen[f'phase{phase}'])} != test matrix {n_matrix}"
+        )
 
 
 def test_frozen_structure_and_union():
