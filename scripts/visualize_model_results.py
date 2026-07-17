@@ -31,21 +31,24 @@ OUT = ROOT / "reports" / "figures" / "model_results"
 PHASES = [1, 2, 3]
 PNAME = {1: "Phase I", 2: "Phase II", 3: "Phase III"}
 
-# Phase I walk-forward (deterministic train_gold output; single-split n_pos=20 is unreliable)
+# Phase I walk-forward on the clean 438-feature model (schema 2.1.0). Per-fold PR-AUC from the
+# fit diagnostic; POOLED (0.308) matches the walkforward_pooled_prauc train_gold logs to MLflow.
+# Single-split n_pos=20 is unreliable; the pooled walk-forward is the trustworthy Phase I signal.
 WF = {
-    2021: (0.386, 664, 168),
-    2022: (0.365, 778, 155),
-    2023: (0.283, 743, 119),
-    2024: (0.191, 388, 19),
+    2021: (0.378, 664, 168),
+    2022: (0.354, 778, 155),
+    2023: (0.271, 743, 119),
+    2024: (0.170, 388, 19),
 }
-WF_POOLED = (0.314, 2573, 461)
+WF_POOLED = (0.308, 2573, 461)
 
+# No "Trial size (facilities)" / "Geography" families: number_of_facilities, num_countries and
+# is_multinational were dropped as conduct-accrued soft leakage, so the clean 438-feature model
+# has no such features. Listing them would imply the model uses leak features it does not.
 FAMILY_COLORS = {
     "Sponsor history": "#4C72B0",
     "Indication (TA) history": "#DD8452",
     "TF-IDF text": "#8C8C8C",
-    "Trial size (facilities)": "#C44E52",
-    "Geography": "#55A868",
     "Enrollment": "#CCB974",
     "Design/eligibility": "#937860",
 }
@@ -58,10 +61,6 @@ def _family(f: str) -> str:
         return "Sponsor history"
     if f.startswith("ta_"):
         return "Indication (TA) history"
-    if f in ("num_countries", "is_multinational"):
-        return "Geography"
-    if f == "number_of_facilities":
-        return "Trial size (facilities)"
     if f == "enrollment_log":
         return "Enrollment"
     return "Design/eligibility"
@@ -72,8 +71,17 @@ def _mlflow_metrics() -> dict:
 
     mlflow.set_tracking_uri("sqlite:///mlflow.db")
     runs = mlflow.search_runs(experiment_names=["cto_gold"])
+    # Select ONLY the current champion: XGBoost on the clean schema-2.1.0 (438-feature) matrix.
+    # The store also holds the stale schema-2.0.0 / 441-feature runs (facilities/countries not
+    # yet dropped) and the challenger runs (LightGBM/CatBoost — no CI / no-skill metrics logged).
+    # Picking by recency or first-match grabbed the wrong run — that is why these figures went
+    # stale. Filter explicitly on model_type + schema; keep the most recent match per phase.
+    champ = runs[
+        (runs["tags.model_type"] == "xgboost")
+        & (runs["params.feature_schema_version"].astype(str) == "2.1.0")
+    ].sort_values("start_time")  # ascending → dict overwrite keeps the most recent per phase
     out = {}
-    for _, r in runs.iterrows():
+    for _, r in champ.iterrows():
         ph = int(r["tags.phase"])
         out[ph] = {
             "prauc": r["metrics.test_prauc"],
@@ -84,6 +92,10 @@ def _mlflow_metrics() -> dict:
             "brier_cal": r["metrics.test_brier_cal"],
             "no_skill": r["metrics.no_skill_baseline"],
         }
+    assert set(out) == {1, 2, 3}, (
+        f"expected schema-2.1.0 xgboost runs for phases 1/2/3, got {sorted(out)} — "
+        "re-run train_gold or check the cto_gold MLflow experiment"
+    )
     return out
 
 
@@ -223,7 +235,7 @@ def chart_family(shap: dict) -> None:
     ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), frameon=True, fontsize=10)
     ax.set_title(
         "Feature-family composition of each model\n"
-        "(TA history prominent in I/II — the surprise; facilities+sponsor drive III)",
+        "(eligibility text leads all phases; TA history prominent in Phase I, sponsor in Phase III)",
         fontsize=14,
         fontweight="bold",
     )
