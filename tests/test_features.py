@@ -4,9 +4,13 @@ import pandas as pd
 import pytest
 
 PROCESSED = Path("data/processed")
+# The feature/label matrices are DVC-tracked parquets (gitignored, absent in CI); the
+# data/processed/ directory itself exists in CI via .gitkeep. Guard on an actual parquet so
+# these integration tests SKIP in CI instead of raising FileNotFoundError.
+_HAS_DATA = (PROCESSED / "features_phase1_train.parquet").exists()
 
 
-@pytest.mark.skipif(not PROCESSED.exists(), reason="Run dvc repro featurize first")
+@pytest.mark.skipif(not _HAS_DATA, reason="requires DVC-tracked feature matrices (absent in CI)")
 def test_feature_files_exist():
     for phase in [1, 2, 3]:
         for split in ["train", "val", "test"]:
@@ -14,7 +18,7 @@ def test_feature_files_exist():
             assert (PROCESSED / f"labels_phase{phase}_{split}.parquet").exists()
 
 
-@pytest.mark.skipif(not PROCESSED.exists(), reason="Run dvc repro featurize first")
+@pytest.mark.skipif(not _HAS_DATA, reason="requires DVC-tracked feature matrices (absent in CI)")
 def test_no_leakage_in_processed_features():
     from cto.features.leakage import LEAKAGE_BLOCKLIST
 
@@ -25,7 +29,7 @@ def test_no_leakage_in_processed_features():
             assert not leaked, f"Phase {phase} {split}: leaked columns: {leaked}"
 
 
-@pytest.mark.skipif(not PROCESSED.exists(), reason="Run dvc repro featurize first")
+@pytest.mark.skipif(not _HAS_DATA, reason="requires DVC-tracked feature matrices (absent in CI)")
 def test_y_not_in_feature_files():
     for phase in [1, 2, 3]:
         for split in ["train", "val", "test"]:
@@ -35,7 +39,7 @@ def test_y_not_in_feature_files():
             )
 
 
-@pytest.mark.skipif(not PROCESSED.exists(), reason="Run dvc repro featurize first")
+@pytest.mark.skipif(not _HAS_DATA, reason="requires DVC-tracked feature matrices (absent in CI)")
 def test_train_larger_than_val_and_test_nonempty():
     for phase in [1, 2, 3]:
         n_train = len(pd.read_parquet(PROCESSED / f"features_phase{phase}_train.parquet"))
@@ -46,7 +50,7 @@ def test_train_larger_than_val_and_test_nonempty():
         assert n_test > 0, f"Phase {phase}: test split is empty"
 
 
-@pytest.mark.skipif(not PROCESSED.exists(), reason="Run dvc repro featurize first")
+@pytest.mark.skipif(not _HAS_DATA, reason="requires DVC-tracked feature matrices (absent in CI)")
 def test_feature_schema_consistent_across_splits():
     for phase in [1, 2, 3]:
         cols_train = set(

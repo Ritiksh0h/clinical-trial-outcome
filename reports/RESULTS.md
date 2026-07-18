@@ -69,8 +69,9 @@ recurs as the root cause of the Phase II ceiling in §5.
 The project treats **leakage as the primary risk**, because on this task leakage is subtle and
 seductive. The spine:
 
-- **Test-driven throughout** — 105 tests (leakage, temporal integrity, sponsor-history correctness,
-  the promotion gate), ruff-clean, run in CI.
+- **Test-driven throughout** — 96 tests run in CI (leakage, temporal integrity, sponsor-history
+  correctness, the promotion gate), ruff-clean; 9 further integration tests validate the
+  DVC-tracked feature matrices locally (the data is not committed to git).
 - **A leakage gate on every feature build.** A blocklist of post-hoc columns is loaded once, and
   `assert_no_leakage()` runs at the end of every feature-construction function — a build that lets a
   blocklisted column through fails loudly rather than silently training on the future.

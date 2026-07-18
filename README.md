@@ -94,14 +94,14 @@ src/cto/
   pipelines/   DVC stages: ingest → featurize → train
 config/        features.yaml · leakage_blocklist.yaml
 reports/       diagnostic reports + figures (the project's paper trail)
-tests/         105 tests — leakage, temporal integrity, sponsor-history, gate
+tests/         96 in CI + 9 local (need DVC data) — leakage, temporal, sponsor-history, gate
 ```
 
 ## Run it
 
 ```bash
 uv sync
-uv run pytest tests/                                 # 105 tests, ruff-clean
+uv run pytest tests/                                 # 105 locally (96 in CI + 9 need DVC data), ruff-clean
 dvc repro                                            # full pipeline (needs AACT creds — see .env.example)
 uv run python scripts/visualize_model_results.py     # regenerate result figures from saved models
 ```
