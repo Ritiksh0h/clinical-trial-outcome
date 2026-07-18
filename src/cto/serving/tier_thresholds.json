@@ -1,0 +1,18 @@
+{
+  "_comment": "Per-phase tercile thresholds = 33rd/67th percentiles of the champion model's CALIBRATED predicted probabilities on the frozen gold TEST matrices (features_gold_phase{N}_test.parquet). A new trial's calibrated score is tiered against its own phase's distribution. Regenerate with scripts/compute_tier_thresholds.py after any retrain.",
+  "1": {
+    "p33": 0.08574303984642029,
+    "p67": 0.17105096578598022,
+    "n_test": 410
+  },
+  "2": {
+    "p33": 0.12051322311162949,
+    "p67": 0.25663331151008606,
+    "n_test": 555
+  },
+  "3": {
+    "p33": 0.30853334069252014,
+    "p67": 0.5218519568443298,
+    "n_test": 275
+  }
+}

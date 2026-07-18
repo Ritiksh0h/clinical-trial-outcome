@@ -1,0 +1,42 @@
+{
+  "_comment": "v1 serving defaults for the 11 sponsor/therapeutic-area history features: per-phase MEDIAN of each column over the gold training matrix (features_gold_phase{N}_train.parquet). A live trial has no sponsor/TA lookup in v1, so these population medians stand in. v2 replaces them with a real historical lookup. Regenerate with scripts (median of the 11 columns per phase).",
+  "1": {
+    "sponsor_prior_trial_count": 225.0,
+    "sponsor_prior_phase_count": 47.0,
+    "sponsor_prior_completion_rate": 0.8405436542282304,
+    "sponsor_prior_same_phase_completion_rate": 0.8686868686868687,
+    "sponsor_is_established": 1.0,
+    "sponsor_is_large": 1.0,
+    "ta_prior_trial_count": 52725.0,
+    "ta_prior_same_phase_count": 11420.5,
+    "ta_prior_completion_rate": 0.7666763452454002,
+    "ta_prior_same_phase_completion_rate": 0.7814227625150283,
+    "ta_bucket": 1.0
+  },
+  "2": {
+    "sponsor_prior_trial_count": 161.0,
+    "sponsor_prior_phase_count": 38.0,
+    "sponsor_prior_completion_rate": 0.8333333333333334,
+    "sponsor_prior_same_phase_completion_rate": 0.8,
+    "sponsor_is_established": 1.0,
+    "sponsor_is_large": 1.0,
+    "ta_prior_trial_count": 45673.0,
+    "ta_prior_same_phase_count": 10334.5,
+    "ta_prior_completion_rate": 0.7814413267111875,
+    "ta_prior_same_phase_completion_rate": 0.7612041582685369,
+    "ta_bucket": 1.0
+  },
+  "3": {
+    "sponsor_prior_trial_count": 179.0,
+    "sponsor_prior_phase_count": 27.0,
+    "sponsor_prior_completion_rate": 0.875399614668676,
+    "sponsor_prior_same_phase_completion_rate": 0.9047619047619048,
+    "sponsor_is_established": 1.0,
+    "sponsor_is_large": 1.0,
+    "ta_prior_trial_count": 31891.0,
+    "ta_prior_same_phase_count": 4412.0,
+    "ta_prior_completion_rate": 0.7924123973173539,
+    "ta_prior_same_phase_completion_rate": 0.810115762011424,
+    "ta_bucket": 3.0
+  }
+}

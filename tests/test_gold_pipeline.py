@@ -23,7 +23,9 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.mark.skipif(not _HAS_GOLD_FEATURES, reason="requires DVC-tracked gold feature matrices (absent in CI)")
+@pytest.mark.skipif(
+    not _HAS_GOLD_FEATURES, reason="requires DVC-tracked gold feature matrices (absent in CI)"
+)
 def test_gold_matrix_has_history_and_no_leak_features():
     """Gold matrix must include the sponsor + indication history features and must NOT
     contain the dropped conduct-accrued soft-leak features."""
@@ -37,7 +39,9 @@ def test_gold_matrix_has_history_and_no_leak_features():
     assert not ({"number_of_facilities", "num_countries", "is_multinational"} & cols)
 
 
-@pytest.mark.skipif(not _HAS_GOLD_LABELS, reason="requires DVC-tracked gold label matrices (absent in CI)")
+@pytest.mark.skipif(
+    not _HAS_GOLD_LABELS, reason="requires DVC-tracked gold label matrices (absent in CI)"
+)
 def test_gold_positive_rates_match_expected():
     """Combined (train+val+test) per-phase gold positive rate matches the confirmed
     membership-routed distribution (Phase I ~0.19, II ~0.30, III ~0.50)."""
@@ -51,7 +55,9 @@ def test_gold_positive_rates_match_expected():
         assert lo <= rate <= hi, f"phase {phase} combined pos_rate {rate:.3f} outside [{lo},{hi}]"
 
 
-@pytest.mark.skipif(not _HAS_GOLD_FEATURES, reason="requires DVC-tracked gold feature matrices (absent in CI)")
+@pytest.mark.skipif(
+    not _HAS_GOLD_FEATURES, reason="requires DVC-tracked gold feature matrices (absent in CI)"
+)
 def test_frozen_counts_match_test_matrices():
     """One-split-two-uses: each phase's frozen test-id count equals that phase's test
     matrix row count (both come from the same split object)."""
@@ -70,7 +76,9 @@ def test_frozen_structure_and_union():
     assert set(frozen["all"]) == union  # 'all' is exactly the dedup union
 
 
-@pytest.mark.skipif(not _HAS_GOLD_FEATURES, reason="requires DVC-tracked gold feature matrices (absent in CI)")
+@pytest.mark.skipif(
+    not _HAS_GOLD_FEATURES, reason="requires DVC-tracked gold feature matrices (absent in CI)"
+)
 def test_no_leakage_in_gold_matrix():
     from cto.features.leakage import LEAKAGE_BLOCKLIST
 
